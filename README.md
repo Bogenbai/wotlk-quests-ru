@@ -35,8 +35,6 @@ _Обновлено 16.10.2026._
    - `AI_VoiceOverData_Russian.zip` — озвучка.
 3. Перезапустите клиент.
 
-Без исправлений озвучка на русском клиенте не работает: в 3.3.5a нет `GetQuestID`, и аддон ищет квест по английскому названию.
-
 Проверка: `/run local s={event=1,questID=783} print(VoiceOver.DataModules:PrepareSound(s), s.filePath)` должна вывести `true` и путь в `AI_VoiceOverData_Russian`.
 
 ## Сборка
