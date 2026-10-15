@@ -88,20 +88,6 @@ $py = "$HOME\VoiceTTS\venv_xtts\Scripts\python.exe"
 - Прогресс и оставшееся время: `Get-Content work\voice.log -Tail 5`.
 - Озвучка пишется прямо в `Interface\AddOns\AI_VoiceOverData_Russian`. После первого перезапуска клиента новые квесты подхватываются по `/reload`.
 
-### 6. Таблица прогресса и архивы для релиза
-
-Обновить таблицу в этом README:
-
-```powershell
-& $py tools\progress_table.py work\quests.json ..\Interface\AddOns\AI_VoiceOverData_Russian README.md
-```
-
-Собрать архивы для Releases (появятся в папке `dist`):
-
-```powershell
-& $py tools\package_release.py . ..\Interface\AddOns\AI_VoiceOverData_Russian dist
-```
-
 ## Лицензии
 
 - Код — MIT.
