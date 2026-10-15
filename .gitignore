@@ -1,0 +1,9 @@
+sql/
+work/
+out/
+compare/
+models/
+venv/
+dist/
+__pycache__/
+*.log
