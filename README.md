@@ -37,25 +37,89 @@ _Обновлено 16.10.2026._
 
 Проверка: `/run local s={event=1,questID=783} print(VoiceOver.DataModules:PrepareSound(s), s.filePath)` должна вывести `true` и путь в `AI_VoiceOverData_Russian`.
 
-## Сборка
+## Сборка своими руками
 
-Нужны Windows, NVIDIA GPU и Python 3.12. Репозиторий клонируется в папку игры.
+### 1. Что понадобится
+
+- Windows и видеокарта NVIDIA. Проверено на RTX 4060 Ti, там полная сборка заняла около 37 часов.
+- [Python 3.12](https://www.python.org/downloads/). При установке поставьте галочку **Add python.exe to PATH**.
+- [Git](https://git-scm.com/download/win).
+- Клиент WoW 3.3.5a с установленными в `Interface\AddOns`:
+  - `AI_VoiceOver` версии 1.4.5;
+  - английским пакетом `AI_VoiceOverData_Wrath`. Он обязателен: с его записей клонируются голоса NPC.
+- Свободное место: около 8 ГБ на диске C (библиотеки и модель) и около 1,5 ГБ в папке игры (озвучка).
+
+### 2. Скачайте репозиторий в папку игры
+
+1. Откройте папку игры (ту, где лежит `Wow.exe`).
+2. Кликните в адресную строку Проводника, введите `powershell` и нажмите Enter. Откроется окно PowerShell в этой папке.
+3. Выполните:
+
+```powershell
+git clone https://github.com/Bogenbai/wotlk-quests-ru.git
+cd wotlk-quests-ru
+```
+
+Рядом с `Wow.exe` появится папка `wotlk-quests-ru`. Все следующие команды выполняйте в том же окне PowerShell.
+
+### 3. Установите библиотеки
+
+Займёт 10–20 минут в зависимости от интернета, на диске C займёт около 5,6 ГБ.
 
 ```powershell
 python -m venv $HOME\VoiceTTS\venv_xtts
 $py = "$HOME\VoiceTTS\venv_xtts\Scripts\python.exe"
 & $py -m pip install -r requirements.txt
 & $py -m pip install transformers==4.55.4
-& $py tools\download_sql.py sql
-& $py tools\select_quests.py sql work\quests.json ..\Interface\AddOns\AI_VoiceOverData_Wrath\generated\sound_length_table.lua
-.\start_voice.bat
 ```
 
-`transformers` ставится отдельно: `coqui-tts` требует 4.57+, но с PyTorch 2.7.1 работает только 4.55.4.
+Последняя команда выведет красное предупреждение о конфликте версий `coqui-tts` и `transformers`. Так и должно быть: с другой версией модель не запускается.
 
-- `start_voice.bat` / `stop_voice.bat` — запуск и остановка, генерация продолжается с места остановки. Лог — `work\voice.log`.
-- `& $py tools\progress_table.py work\quests.json ..\Interface\AddOns\AI_VoiceOverData_Russian README.md` — обновить таблицу прогресса.
-- `& $py tools\package_release.py . ..\Interface\AddOns\AI_VoiceOverData_Russian dist` — собрать архивы для релиза.
+Если вы закрыли окно PowerShell, перед следующими шагами откройте его заново в папке `wotlk-quests-ru` и снова выполните строку `$py = ...`.
+
+### 4. Скачайте русские тексты квестов
+
+```powershell
+& $py tools\download_sql.py sql
+```
+
+Появится папка `sql` с 10 файлами, примерно 75 МБ.
+
+### 5. Отберите квесты
+
+```powershell
+& $py tools\select_quests.py sql work\quests.json ..\Interface\AddOns\AI_VoiceOverData_Wrath\generated\sound_length_table.lua
+```
+
+В конце должна появиться строка вида `ruRU quests 9456 selected 5825`.
+
+### 6. Запустите генерацию
+
+Дважды кликните `start_voice.bat`.
+
+- При первом запуске скачается модель XTTS-v2, около 1,8 ГБ. Запуская генерацию, вы принимаете её [лицензию](LICENSES/CPML-1.0.txt).
+- Генерация идёт в фоне. Окно можно закрыть, компьютером можно пользоваться и играть.
+- Посмотреть прогресс: `Get-Content work\voice.log -Tail 5`. Там видно, сколько файлов готово и сколько часов осталось.
+- Озвучка пишется прямо в `Interface\AddOns\AI_VoiceOverData_Russian`. Перезапустите клиент один раз, а дальше новые квесты подхватываются командой `/reload`.
+
+### 7. Остановка и продолжение
+
+- `stop_voice.bat` — остановить.
+- `start_voice.bat` — продолжить. Готовые файлы не переделываются.
+
+### 8. Таблица прогресса и архивы для релиза
+
+Обновить таблицу в этом README:
+
+```powershell
+& $py tools\progress_table.py work\quests.json ..\Interface\AddOns\AI_VoiceOverData_Russian README.md
+```
+
+Собрать архивы для Releases (появятся в папке `dist`):
+
+```powershell
+& $py tools\package_release.py . ..\Interface\AddOns\AI_VoiceOverData_Russian dist
+```
 
 ## Лицензии
 
