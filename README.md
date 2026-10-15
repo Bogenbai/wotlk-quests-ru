@@ -95,3 +95,5 @@ $py = "$HOME\VoiceTTS\venv_xtts\Scripts\python.exe"
 - `addon/AI_VoiceOver` основан на [AI VoiceOver](https://github.com/mrthinger/wow-voiceover) (Unlicense).
 - Тексты квестов — из [AzerothCore](https://github.com/azerothcore/azerothcore-wotlk) (GPL-2.0), исходно Blizzard Entertainment.
 - Голоса NPC — с пакета `AI_VoiceOverData_Wrath` от WrkX.
+
+Создан для русскоязычных игроков. Язык — это не национальность, а культура — это не государство.
