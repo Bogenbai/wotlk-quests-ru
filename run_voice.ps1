@@ -10,7 +10,7 @@ $pidFile = Join-Path $work "voice.pid"
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 
 if (Test-Path $pidFile) {
-    $running = Get-Process -Id (Get-Content $pidFile) -ErrorAction SilentlyContinue
+    $running = Get-Process -Id (Get-Content $pidFile) -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $Python }
     if ($running) {
         Write-Host "Already running (PID $($running.Id))"
         exit
