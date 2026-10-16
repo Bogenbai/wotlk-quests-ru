@@ -7,6 +7,7 @@ import traceback
 
 import numpy as np
 import soundfile
+import torch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import luagen
@@ -79,6 +80,16 @@ class Voices:
         return self.latents[clip]
 
 
+def resolve_device(requested):
+    if requested != "auto":
+        return requested
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 def synthesize(model, voice, text):
     gpt_cond_latent, speaker_embedding = voice
     pieces = []
@@ -105,6 +116,8 @@ def main():
     parser.add_argument("wrath_sounds")
     parser.add_argument("module_dir")
     parser.add_argument("cache_dir")
+    parser.add_argument("--device", default="auto", choices=("auto", "cuda", "mps", "cpu"))
+    parser.add_argument("--limit", type=int)
     args = parser.parse_args()
 
     data = json.load(open(args.quests, encoding="utf-8"))
@@ -122,13 +135,16 @@ def main():
             name = f"{quest['id']}-{event}"
             if quest[event] and name not in lengths:
                 jobs.append((name, quest, event, npc_field))
+    jobs = jobs[:args.limit]
     total_chars = sum(len(quest[event]) for _, quest, event, _ in jobs)
     print(f"done {len(lengths)}, remaining {len(jobs)} files, {total_chars} chars", flush=True)
 
     npc_references = build_npc_references(data["lookup"], args.wrath_sounds)
     defaults = default_references(data["lookup"], npc_references)
 
-    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to("cuda")
+    device = resolve_device(args.device)
+    print(f"device {device}", flush=True)
+    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
     model = tts.synthesizer.tts_model
     voices = Voices(model, os.path.join(args.cache_dir, "references"))
 
@@ -163,7 +179,8 @@ def main():
     luagen.write_sound_lengths(args.module_dir, lengths)
     with open(progress_path, "w", encoding="utf-8") as f:
         json.dump(lengths, f)
-    print("finished", flush=True)
+    elapsed = time.time() - started
+    print(f"finished in {elapsed / 60:.1f} min, {done_chars / elapsed:.1f} chars/s", flush=True)
 
 
 if __name__ == "__main__":
