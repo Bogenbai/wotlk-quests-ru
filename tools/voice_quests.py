@@ -112,7 +112,7 @@ def write_ogg(path, audio):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("quests")
+    parser.add_argument("quests", nargs="+")
     parser.add_argument("wrath_sounds")
     parser.add_argument("module_dir")
     parser.add_argument("cache_dir")
@@ -120,8 +120,9 @@ def main():
     parser.add_argument("--limit", type=int)
     args = parser.parse_args()
 
-    data = json.load(open(args.quests, encoding="utf-8"))
-    selected = data["selected"]
+    selections = [json.load(open(path, encoding="utf-8")) for path in args.quests]
+    data = selections[0]
+    selected = [quest for selection in selections for quest in selection["selected"]]
     luagen.write_static_files(args.module_dir, data["lookup"])
 
     sounds_dir = os.path.join(args.module_dir, "generated", "sounds", "quests")
