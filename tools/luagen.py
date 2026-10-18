@@ -16,6 +16,8 @@ TOC = f"""## Interface: 30300
 
 Module.lua
 generated\\quest_id_lookups.lua
+generated\\npc_gossip_file_lookups.lua
+generated\\object_gossip_file_lookups.lua
 generated\\sound_length_table.lua
 """
 
@@ -72,8 +74,22 @@ def _write_atomic(path, text):
     os.replace(temp, path)
 
 
-def write_static_files(module_dir, quests):
-    os.makedirs(os.path.join(module_dir, "generated", "sounds", "quests"), exist_ok=True)
+def write_gossip_lookup(module_dir, file_name, table_name, owners):
+    lines = [HEADER, f"{MODULE_NAME}.{table_name} = {{"]
+    for owner, texts in sorted(owners.items(), key=lambda item: int(item[0])):
+        lines.append(f"    [{owner}] = {{")
+        for text, hash_ in sorted(texts.items()):
+            lines.append(f'        [{lua_string(lookup_key(text))}] = "{hash_}",')
+        lines.append("    },")
+    lines.append("}")
+    _write_atomic(os.path.join(module_dir, "generated", file_name), "\n".join(lines) + "\n")
+
+
+def write_static_files(module_dir, quests, gossip_lookups):
+    for kind in ("quests", "gossip"):
+        os.makedirs(os.path.join(module_dir, "generated", "sounds", kind), exist_ok=True)
+    write_gossip_lookup(module_dir, "npc_gossip_file_lookups.lua", "GossipLookupByNPCID", gossip_lookups["npc"])
+    write_gossip_lookup(module_dir, "object_gossip_file_lookups.lua", "GossipLookupByObjectID", gossip_lookups["object"])
     _write_atomic(os.path.join(module_dir, MODULE_NAME + ".toc"), TOC)
     _write_atomic(os.path.join(module_dir, "Module.lua"), MODULE_LUA)
 

@@ -21,6 +21,8 @@ $questLists = @("quests.json", "quests_horde.json") |
     ForEach-Object { Join-Path $work $_ } |
     Where-Object { Test-Path $_ } |
     ForEach-Object { "`"$_`"" }
+$gossipList = Join-Path $work "gossip.json"
+$gossipArgs = if (Test-Path $gossipList) { @("--gossip", "`"$gossipList`"") } else { @() }
 
 $env:TTS_HOME = Join-Path $TtsHome "tts"
 $process = Start-Process -FilePath $Python `
@@ -30,7 +32,7 @@ $process = Start-Process -FilePath $Python `
         "`"$GameDir\Interface\AddOns\AI_VoiceOverData_Wrath\generated\sounds\quests`"",
         "`"$GameDir\Interface\AddOns\AI_VoiceOverData_Russian`"",
         "`"$TtsHome\progress`""
-    )) `
+    ) + $gossipArgs) `
     -WorkingDirectory $build `
     -RedirectStandardOutput (Join-Path $work "voice.log") `
     -RedirectStandardError (Join-Path $work "voice.err.log") `

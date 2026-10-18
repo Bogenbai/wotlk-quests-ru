@@ -15,6 +15,10 @@ TABLES = [
     "creature_queststarter",
     "creature_questender",
     "factiontemplate_dbc",
+    "broadcast_text",
+    "broadcast_text_locale",
+    "quest_greeting",
+    "quest_greeting_locale",
 ]
 
 out_dir = sys.argv[1]

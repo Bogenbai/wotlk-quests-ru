@@ -53,6 +53,27 @@ def build_npc_references(quests, wrath_sounds):
     return references
 
 
+def quest_reference(quest, event, npc_field, npc_references, wrath_sounds, defaults):
+    npcs = quest[npc_field]
+    clip = next((npc_references[n["id"]] for n in npcs if n["id"] in npc_references), None)
+    clip = clip or english_clip(wrath_sounds, quest["id"], event)
+    return clip or defaults.get(npcs[0]["gender"] if npcs else 0)
+
+
+def gossip_reference(wrath_gossip, voice_hashes):
+    clips = []
+    for hash_ in voice_hashes:
+        for prefix in ("", "m-"):
+            path = os.path.join(wrath_gossip, f"{prefix}{hash_}.ogg")
+            if os.path.exists(path):
+                seconds = clip_seconds(path)
+                if seconds >= MIN_REFERENCE_SECONDS:
+                    return path
+                clips.append((seconds, path))
+                break
+    return max(clips)[1] if clips else None
+
+
 def default_references(quests, npc_references):
     defaults = {}
     for quest in quests:
@@ -116,6 +137,7 @@ def main():
     parser.add_argument("wrath_sounds")
     parser.add_argument("module_dir")
     parser.add_argument("cache_dir")
+    parser.add_argument("--gossip")
     parser.add_argument("--device", default="auto", choices=("auto", "cuda", "mps", "cpu"))
     parser.add_argument("--limit", type=int)
     args = parser.parse_args()
@@ -123,25 +145,33 @@ def main():
     selections = [json.load(open(path, encoding="utf-8")) for path in args.quests]
     data = selections[0]
     selected = [quest for selection in selections for quest in selection["selected"]]
-    luagen.write_static_files(args.module_dir, data["lookup"])
+    gossip = json.load(open(args.gossip, encoding="utf-8")) if args.gossip else {"lines": [], "lookups": {"npc": {}, "object": {}}}
+    luagen.write_static_files(args.module_dir, data["lookup"], gossip["lookups"])
 
-    sounds_dir = os.path.join(args.module_dir, "generated", "sounds", "quests")
+    sounds_dirs = {kind: os.path.join(args.module_dir, "generated", "sounds", kind) for kind in ("quests", "gossip")}
+    wrath_gossip = os.path.join(os.path.dirname(args.wrath_sounds), "gossip")
     progress_path = os.path.join(args.cache_dir, "lengths.json")
     lengths = json.load(open(progress_path, encoding="utf-8")) if os.path.exists(progress_path) else {}
-    lengths = {name: length for name, length in lengths.items() if os.path.exists(os.path.join(sounds_dir, name + ".ogg"))}
+    lengths = {name: length for name, length in lengths.items()
+               if any(os.path.exists(os.path.join(d, name + ".ogg")) for d in sounds_dirs.values())}
+
+    npc_references = build_npc_references(data["lookup"], args.wrath_sounds)
+    defaults = default_references(data["lookup"], npc_references)
 
     jobs = []
     for quest in selected:
         for event, npc_field in EVENTS:
             name = f"{quest['id']}-{event}"
             if quest[event] and name not in lengths:
-                jobs.append((name, quest, event, npc_field))
+                clip = quest_reference(quest, event, npc_field, npc_references, args.wrath_sounds, defaults) or defaults[0]
+                jobs.append({"name": name, "kind": "quests", "text": quest[event], "label": f"lvl {quest['level']}", "clip": clip})
+    for line in gossip["lines"]:
+        if line["hash"] not in lengths:
+            clip = gossip_reference(wrath_gossip, line["voice_hashes"]) or defaults[0]
+            jobs.append({"name": line["hash"], "kind": "gossip", "text": line["text"], "label": f"gossip lvl {line['level']}", "clip": clip})
     jobs = jobs[:args.limit]
-    total_chars = sum(len(quest[event]) for _, quest, event, _ in jobs)
+    total_chars = sum(len(job["text"]) for job in jobs)
     print(f"done {len(lengths)}, remaining {len(jobs)} files, {total_chars} chars", flush=True)
-
-    npc_references = build_npc_references(data["lookup"], args.wrath_sounds)
-    defaults = default_references(data["lookup"], npc_references)
 
     device = resolve_device(args.device)
     print(f"device {device}", flush=True)
@@ -152,24 +182,21 @@ def main():
     started = time.time()
     last_save = started
     done_chars = 0
-    for index, (name, quest, event, npc_field) in enumerate(jobs, 1):
-        npcs = quest[npc_field]
-        clip = next((npc_references[n["id"]] for n in npcs if n["id"] in npc_references), None)
-        clip = clip or english_clip(args.wrath_sounds, quest["id"], event)
-        clip = clip or defaults.get(npcs[0]["gender"] if npcs else 0) or defaults[0]
+    for index, job in enumerate(jobs, 1):
+        name = job["name"]
         try:
-            audio = synthesize(model, voices.get(clip), textprep.render(quest[event], "m"))
-            write_ogg(os.path.join(sounds_dir, name + ".ogg"), audio)
+            audio = synthesize(model, voices.get(job["clip"]), textprep.render(job["text"], "m"))
+            write_ogg(os.path.join(sounds_dirs[job["kind"]], name + ".ogg"), audio)
             lengths[name] = round(len(audio) / SAMPLE_RATE, 2)
         except Exception:
             print(f"FAILED {name}", flush=True)
             traceback.print_exc()
             continue
 
-        done_chars += len(quest[event])
+        done_chars += len(job["text"])
         elapsed = time.time() - started
         eta_hours = (total_chars - done_chars) / (done_chars / elapsed) / 3600
-        print(f"[{index}/{len(jobs)}] lvl {quest['level']} {name} {lengths[name]:.1f}s, eta {eta_hours:.1f}h", flush=True)
+        print(f"[{index}/{len(jobs)}] {job['label']} {name} {lengths[name]:.1f}s, eta {eta_hours:.1f}h", flush=True)
 
         if time.time() - last_save >= SAVE_EVERY_SECONDS or index == len(jobs):
             luagen.write_sound_lengths(args.module_dir, lengths)
