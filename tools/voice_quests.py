@@ -182,15 +182,19 @@ def main():
     started = time.time()
     last_save = started
     done_chars = 0
+    gpu_lost = False
     for index, job in enumerate(jobs, 1):
         name = job["name"]
         try:
             audio = synthesize(model, voices.get(job["clip"]), textprep.render(job["text"], "m"))
             write_ogg(os.path.join(sounds_dirs[job["kind"]], name + ".ogg"), audio)
             lengths[name] = round(len(audio) / SAMPLE_RATE, 2)
-        except Exception:
+        except Exception as error:
             print(f"FAILED {name}", flush=True)
             traceback.print_exc()
+            if "CUDA error" in str(error):
+                gpu_lost = True
+                break
             continue
 
         done_chars += len(job["text"])
@@ -207,6 +211,8 @@ def main():
     luagen.write_sound_lengths(args.module_dir, lengths)
     with open(progress_path, "w", encoding="utf-8") as f:
         json.dump(lengths, f)
+    if gpu_lost:
+        sys.exit("GPU lost, run start_voice.bat again")
     elapsed = time.time() - started
     print(f"finished in {elapsed / 60:.1f} min, {done_chars / elapsed:.1f} chars/s", flush=True)
 
