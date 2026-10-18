@@ -2,6 +2,8 @@
 
 Русская нейросетевая озвучка квестов для WoW 3.3.5a с русским клиентом. Работает как пакет данных для [AI VoiceOver](https://github.com/mrthinger/wow-voiceover). Голоса NPC склонированы моделью XTTS-v2 с английского пакета `AI_VoiceOverData_Wrath`.
 
+https://github.com/user-attachments/assets/f2a37f24-1b5a-42a0-94ed-869f003e7f39
+
 Создан для русскоязычных игроков. Язык — это не национальность, а культура — это не государство.
 
 ## Прогресс
