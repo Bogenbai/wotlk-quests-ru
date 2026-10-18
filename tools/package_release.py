@@ -1,31 +1,55 @@
+import argparse
+import json
 import os
-import sys
 import zipfile
 
-repo_dir, module_dir, out_dir = sys.argv[1:4]
-os.makedirs(out_dir, exist_ok=True)
-license_path = os.path.join(repo_dir, "LICENSES", "CPML-1.0.txt")
+MODULE_NAME = "AI_VoiceOverData_Russian"
+
+parser = argparse.ArgumentParser()
+parser.add_argument("repo_dir")
+parser.add_argument("module_dir")
+parser.add_argument("out_dir")
+parser.add_argument("--horde")
+args = parser.parse_args()
+
+os.makedirs(args.out_dir, exist_ok=True)
+license_path = os.path.join(args.repo_dir, "LICENSES", "CPML-1.0.txt")
+horde_files = set()
+if args.horde:
+    for quest in json.load(open(args.horde, encoding="utf-8"))["selected"]:
+        horde_files.update(f"{quest['id']}-{event}.ogg" for event in ("accept", "complete") if quest[event])
 
 
-def add_tree(archive, source, prefix):
-    count = 0
+def module_files(source):
     for root, _, files in os.walk(source):
         for name in sorted(files):
-            if name.endswith((".tmp", ".tmp.ogg")):
-                continue
-            path = os.path.join(root, name)
-            archive.write(path, os.path.join(prefix, os.path.relpath(path, source)))
+            if not name.endswith((".tmp", ".tmp.ogg")):
+                yield os.path.join(root, name)
+
+
+def is_horde(path):
+    return os.path.basename(os.path.dirname(path)) == "quests" and os.path.basename(path) in horde_files
+
+
+def write_zip(path, files, compression, prefix, source, extra=()):
+    count = 0
+    with zipfile.ZipFile(path, "w", compression) as archive:
+        for file in files:
+            archive.write(file, os.path.join(prefix, os.path.relpath(file, source)))
             count += 1
-    return count
+        for file, name in extra:
+            archive.write(file, os.path.join(prefix, name))
+    print(f"{path}: {count} files, {os.path.getsize(path) / 2**20:.0f} MB")
 
 
-voice_zip = os.path.join(out_dir, "AI_VoiceOverData_Russian.zip")
-with zipfile.ZipFile(voice_zip, "w", zipfile.ZIP_STORED) as archive:
-    files = add_tree(archive, module_dir, "AI_VoiceOverData_Russian")
-    archive.write(license_path, os.path.join("AI_VoiceOverData_Russian", "LICENSE-CPML.txt"))
-print(f"{voice_zip}: {files} files, {os.path.getsize(voice_zip) / 2**20:.0f} MB")
+files = list(module_files(args.module_dir))
+license_entry = [(license_path, "LICENSE-CPML.txt")]
+write_zip(os.path.join(args.out_dir, MODULE_NAME + ".zip"), [f for f in files if not is_horde(f)],
+          zipfile.ZIP_STORED, MODULE_NAME, args.module_dir, license_entry)
+if horde_files:
+    write_zip(os.path.join(args.out_dir, MODULE_NAME + "-Horde.zip"), [f for f in files if is_horde(f)],
+              zipfile.ZIP_STORED, MODULE_NAME, args.module_dir, license_entry)
 
-fix_zip = os.path.join(out_dir, "AI_VoiceOver-ruRU-fix.zip")
-with zipfile.ZipFile(fix_zip, "w", zipfile.ZIP_DEFLATED) as archive:
-    files = add_tree(archive, os.path.join(repo_dir, "addon", "AI_VoiceOver"), "AI_VoiceOver")
-print(f"{fix_zip}: {files} files")
+addon_dir = os.path.join(args.repo_dir, "addon", "AI_VoiceOver")
+write_zip(os.path.join(args.out_dir, "AI_VoiceOver-ruRU-fix.zip"), list(module_files(addon_dir)),
+          zipfile.ZIP_DEFLATED, "AI_VoiceOver", addon_dir)
