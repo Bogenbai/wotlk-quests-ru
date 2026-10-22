@@ -10,6 +10,7 @@ parser.add_argument("repo_dir")
 parser.add_argument("module_dir")
 parser.add_argument("out_dir")
 parser.add_argument("--horde")
+parser.add_argument("--catquest")
 args = parser.parse_args()
 
 os.makedirs(args.out_dir, exist_ok=True)
@@ -49,6 +50,11 @@ write_zip(os.path.join(args.out_dir, MODULE_NAME + ".zip"), [f for f in files if
 if horde_files:
     write_zip(os.path.join(args.out_dir, MODULE_NAME + "-Horde.zip"), [f for f in files if is_horde(f)],
               zipfile.ZIP_STORED, MODULE_NAME, args.module_dir, license_entry)
+
+if args.catquest:
+    catquest_name = os.path.basename(os.path.normpath(args.catquest))
+    write_zip(os.path.join(args.out_dir, catquest_name + ".zip"), list(module_files(args.catquest)),
+              zipfile.ZIP_STORED, catquest_name, args.catquest)
 
 addon_dir = os.path.join(args.repo_dir, "addon", "AI_VoiceOver")
 write_zip(os.path.join(args.out_dir, "AI_VoiceOver-ruRU-fix.zip"), list(module_files(addon_dir)),
