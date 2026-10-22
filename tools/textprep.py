@@ -7,6 +7,23 @@ PLAYER_FORMS = {
     "f": {"n": "путница", "c": "искательница приключений", "r": "странница"},
 }
 
+DECLENSIONS = {
+    "m": {
+        "c": ["искатель приключений", "искателя приключений", "искателю приключений", "искателя приключений",
+              "искателем приключений", "искателе приключений", "искатель приключений", "искатели приключений",
+              "искателей приключений"],
+        "r": ["странник", "странника", "страннику", "странника", "странником", "страннике", "странник",
+              "странники", "странников"],
+    },
+    "f": {
+        "c": ["искательница приключений", "искательницы приключений", "искательнице приключений",
+              "искательницу приключений", "искательницей приключений", "искательнице приключений",
+              "искательница приключений", "искательницы приключений", "искательниц приключений"],
+        "r": ["странница", "странницы", "страннице", "странницу", "странницей", "страннице", "странница",
+              "странницы", "странниц"],
+    },
+}
+
 STRESS = {
     "Североземь": "Североз+емь",
     "Штормград": "Штормгр+ад",
@@ -24,11 +41,31 @@ def variants(text):
     return [("m-", "m"), ("f-", "f")] if is_gendered(text) else [("", "m")]
 
 
+def decline(gender, token, case):
+    forms = DECLENSIONS[gender][token.lower()]
+    return forms[case] if case < len(forms) else forms[0]
+
+
+def plural(number, forms):
+    if number % 10 == 1 and number % 100 != 11:
+        return forms[0]
+    if 2 <= number % 10 <= 4 and not 12 <= number % 100 <= 14:
+        return forms[1]
+    return forms[2]
+
+
 def render(text, gender):
     forms = PLAYER_FORMS[gender]
-    text = re.sub(r"\$[gG]\s*([^:;]*):([^;]*);", lambda m: m.group(1 if gender == "m" else 2), text)
+    text = re.sub(r"\|3-(\d+)\(\$([cCrR])\)", lambda m: decline(gender, m.group(2), int(m.group(1))), text)
+    text = re.sub(r"\|3-\d+\(([^)]*)\)", r"\1", text)
+    text = re.sub(r"(\d+)\s*\|4([^:;]*):([^:;]*):([^;]*);", lambda m: m.group(1) + " " + plural(int(m.group(1)), m.group(2, 3, 4)), text)
+    text = re.sub(r"\|4([^:;]*):([^:;]*):([^;]*);", r"\3", text)
+    text = re.sub(r"\$[gG]\s*([^:;]*):([^:;]*)(:[^;]*)?;", lambda m: m.group(1 if gender == "m" else 2), text)
     text = re.sub(r"\$([nNcCrR])", lambda m: forms[m.group(1).lower()], text)
+    text = re.sub(r"\$\d+[wW]", "немало", text)
+    text = re.sub(r"\$[gG]\b", "", text)
     text = re.sub(r"\$[bB]", "\n", text)
+    text = re.sub(r"[$|]", "", text)
     text = re.sub(r"<([^>]*)>", r"\1", text)
     text = re.sub(r"\d+", lambda m: num2words(int(m.group()), lang="ru"), text)
     text = text.replace("–", ",").replace("—", ",").replace("…", "...")
