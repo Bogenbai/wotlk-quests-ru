@@ -18,10 +18,14 @@ parser.add_argument("module_dir")
 parser.add_argument("readme")
 parser.add_argument("horde", nargs="?")
 parser.add_argument("--gossip")
+parser.add_argument("--redo")
+parser.add_argument("--note")
 args = parser.parse_args()
 
 lengths_path = os.path.join(args.module_dir, "generated", "sound_length_table.lua")
 done = set(re.findall(r'\["([^"]+)"\] =', open(lengths_path, encoding="utf-8").read())) if os.path.exists(lengths_path) else set()
+if args.redo:
+    done &= set(json.load(open(args.redo, encoding="utf-8"))) if os.path.exists(args.redo) else set()
 
 
 def level_band(level):
@@ -96,7 +100,8 @@ for name in not_started:
     rows.append(f"| {name} | ❌ не начато |")
 
 updated = datetime.date.today().strftime("%d.%m.%Y")
-section = "\n".join([START, f"_Обновлено {updated}._", "", *rows, END])
+header = [f"_Обновлено {updated}._"] + ([args.note] if args.note else [])
+section = "\n".join([START, "\n\n".join(header), "", *rows, END])
 
 readme = open(args.readme, encoding="utf-8").read()
 if START not in readme or END not in readme:
