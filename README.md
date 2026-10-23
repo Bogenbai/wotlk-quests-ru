@@ -6,6 +6,12 @@ https://github.com/user-attachments/assets/f2a37f24-1b5a-42a0-94ed-869f003e7f39
 
 Создан для русскоязычных игроков. Язык — это не национальность, а культура — это не государство.
 
+### Гибрид с CatQuest
+
+Квесты 1–60 уровня по возможности звучат голосами из [CatQuest Voices](https://www.curseforge.com/wow/addons/catquest-voices) — озвучки автора Cathey для WoW Forever, сделанной на ElevenLabs. Она заметно живее нашей и учитывает пол персонажа. Мы перенесли её на 3.3.5a: файлы переименованы под AI VoiceOver, а реплики, текст которых на 3.3.5a заметно отличается, отброшены. Всё остальное — квесты 61–80, праздничные квесты, квесты без озвучки CatQuest и реплики NPC — озвучено у нас через XTTS-v2.
+
+Спасибо Cathey за CatQuest. Если вы играете в WoW Forever, ставьте [оригинальный аддон](https://www.curseforge.com/wow/addons/catquest).
+
 ## Прогресс
 
 <!-- progress:start -->
@@ -45,9 +51,9 @@ _Обновлено 23.10.2026._
 | Уровни 31–40 | 378 / 378 | `██████████` 100% | ✅ готово |
 | Уровни 41–50 | 457 / 457 | `██████████` 100% | ✅ готово |
 | Уровни 51–60 | 881 / 881 | `██████████` 100% | ✅ готово |
-| Уровни 61–70 | 1143 / 1307 | `█████████░` 87% | 🔄 в работе |
-| Уровни 71–80 | 1834 / 1996 | `█████████░` 92% | 🔄 в работе |
-| **Всего** | **6535 / 6861** | `██████████` **95%** | |
+| Уровни 61–70 | 1307 / 1307 | `██████████` 100% | ✅ готово |
+| Уровни 71–80 | 1996 / 1996 | `██████████` 100% | ✅ готово |
+| **Всего** | **6861 / 6861** | `██████████` **100%** | |
 
 | Ещё не озвучено | Статус |
 |---|---|
@@ -56,14 +62,15 @@ _Обновлено 23.10.2026._
 
 ## Установка
 
-Нужен клиент WoW 3.3.5a на русском языке. Озвучка рассчитана на мужского персонажа.
+Нужен клиент WoW 3.3.5a на русском языке. Наша часть озвучки рассчитана на мужского персонажа, часть от CatQuest — на оба пола.
 
 ### 1. Скачайте архивы
 
 - `AI_VoiceOver-WoW_3.3.5-v1.4.5.zip` — сам аддон, со [страницы релиза AI VoiceOver 1.4.5](https://github.com/mrthinger/wow-voiceover/releases/tag/v1.4.5). Нужна именно версия 1.4.5 и именно файл для 3.3.5.
 - `AI_VoiceOver-ruRU-fix.zip` — исправления для русского клиента, из [Releases](../../releases) этого репозитория.
-- `AI_VoiceOverData_Russian.zip` — озвучка квестов Альянса и нейтральных и реплик NPC, 1,5 ГБ, оттуда же.
+- `AI_VoiceOverData_Russian.zip` — озвучка квестов Альянса и нейтральных и реплик NPC, 1,9 ГБ, оттуда же.
 - `AI_VoiceOverData_Russian-Horde.zip` — озвучка квестов Орды, 0,6 ГБ, оттуда же. Нужна только тем, кто играет за Орду.
+- `AI_VoiceOverData_CatQuest.zip` — озвучка квестов 1–60 из CatQuest, 0,9 ГБ, оттуда же. Необязательна, но с ней квесты 1–60 звучат лучше.
 
 ### 2. Распакуйте в папку аддонов
 
@@ -75,6 +82,7 @@ _Обновлено 23.10.2026._
 2. `AI_VoiceOver-ruRU-fix.zip`. Windows спросит про замену трёх файлов — ответьте «Заменить». Без этого шага русская озвучка играть не будет.
 3. `AI_VoiceOverData_Russian.zip`.
 4. `AI_VoiceOverData_Russian-Horde.zip`, если играете за Орду. Он дополняет ту же папку `AI_VoiceOverData_Russian` — на вопрос о слиянии папок ответьте «Да».
+5. `AI_VoiceOverData_CatQuest.zip`, если скачали.
 
 Если у вас уже стоит прошлая версия озвучки, распакуйте новые архивы поверх с заменой файлов.
 
@@ -82,7 +90,7 @@ _Обновлено 23.10.2026._
 
 ### 3. Включите в игре
 
-Запустите игру. На экране выбора персонажа нажмите «Модификации» и проверьте, что включены `VoiceOver` и `VoiceOver Data - Russian`.
+Запустите игру. На экране выбора персонажа нажмите «Модификации» и проверьте, что включены `VoiceOver`, `VoiceOver Data - Russian` и, если ставили, `VoiceOver Data - Russian (CatQuest)`.
 
 Озвучка играет, когда открываете окно квеста у NPC — при взятии и при сдаче, — и когда заговариваете с NPC.
 
@@ -94,7 +102,7 @@ _Обновлено 23.10.2026._
 /run local s={event=1,questID=783} print(VoiceOver.DataModules:PrepareSound(s), s.filePath)
 ```
 
-Должно вывести `true` и путь, в котором есть `AI_VoiceOverData_Russian`. Если `false` — проверьте, что второй архив распакован с заменой файлов.
+Должно вывести `true` и путь, в котором есть `AI_VoiceOverData_Russian` или `AI_VoiceOverData_CatQuest`. Если `false` — проверьте, что второй архив распакован с заменой файлов.
 
 Английский пакет `AI_VoiceOverData_Wrath` можно поставить вместе с русским: он озвучит по-английски то, чего ещё нет на русском.
 
@@ -161,10 +169,19 @@ $py = "$HOME\VoiceTTS\venv_xtts\Scripts\python.exe"
 - Прогресс и оставшееся время: `Get-Content work\voice.log -Tail 5`.
 - Озвучка пишется прямо в `Interface\AddOns\AI_VoiceOverData_Russian`. После первого перезапуска клиента новые квесты подхватываются по `/reload`.
 
+### 6. Модуль CatQuest
+
+Скачайте и распакуйте [CatQuest Voices](https://www.curseforge.com/wow/addons/catquest-voices) в любую папку, например `..\_catquest\CatQuest_Voices`, затем:
+
+```powershell
+& $py tools\import_catquest.py ..\_catquest\CatQuest_Voices work\quests.json ..\Interface\AddOns\AI_VoiceOverData_CatQuest
+```
+
 ## Лицензии
 
 - Код — MIT.
-- Озвучка — [Coqui Public Model License](LICENSES/CPML-1.0.txt), только некоммерческое использование.
+- Озвучка XTTS — [Coqui Public Model License](LICENSES/CPML-1.0.txt), только некоммерческое использование.
+- Озвучка в `AI_VoiceOverData_CatQuest` — из [CatQuest Voices](https://www.curseforge.com/wow/addons/catquest-voices), автор Cathey, лицензия [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Изменения: файлы переименованы под формат AI VoiceOver, часть реплик отброшена.
 - `addon/AI_VoiceOver` основан на [AI VoiceOver](https://github.com/mrthinger/wow-voiceover) (Unlicense).
 - Тексты квестов — из [AzerothCore](https://github.com/azerothcore/azerothcore-wotlk) (GPL-2.0), исходно Blizzard Entertainment.
 - Голоса NPC — с пакета `AI_VoiceOverData_Wrath` от WrkX.
