@@ -1,7 +1,10 @@
 --extra-index-url https://download.pytorch.org/whl/cu126
 torch==2.7.1+cu126
 torchaudio==2.7.1+cu126
-coqui-tts==0.27.5
+f5-tts==1.1.22
+transformers==4.55.4
+ruaccent==1.5.8.3
+imageio-ffmpeg==0.6.0
 soundfile==0.14.0
 num2words==0.5.14
 numpy==2.5.4

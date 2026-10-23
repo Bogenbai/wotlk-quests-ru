@@ -19,6 +19,7 @@ TABLES = [
     "broadcast_text_locale",
     "quest_greeting",
     "quest_greeting_locale",
+    "creature_text",
 ]
 
 out_dir = sys.argv[1]

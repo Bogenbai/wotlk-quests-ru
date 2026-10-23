@@ -1,7 +1,7 @@
 param(
     [string]$GameDir = (Split-Path $PSScriptRoot -Parent),
     [string]$TtsHome = (Join-Path $HOME "VoiceTTS"),
-    [string]$Python = (Join-Path $TtsHome "venv_xtts\Scripts\python.exe")
+    [string]$Python = (Join-Path $TtsHome "venv_f5\Scripts\python.exe")
 )
 
 $build = $PSScriptRoot
@@ -21,18 +21,20 @@ $questLists = @("quests.json", "quests_horde.json") |
     ForEach-Object { Join-Path $work $_ } |
     Where-Object { Test-Path $_ } |
     ForEach-Object { "`"$_`"" }
+$optionalArgs = @("--ru-voices", "`"$work\ru_voices.json`"", "--redo", "`"$TtsHome\progress\redo_f5.json`"")
 $gossipList = Join-Path $work "gossip.json"
-$gossipArgs = if (Test-Path $gossipList) { @("--gossip", "`"$gossipList`"") } else { @() }
+if (Test-Path $gossipList) { $optionalArgs += @("--gossip", "`"$gossipList`"") }
+$catquest = Join-Path $GameDir "Interface\AddOns\AI_VoiceOverData_CatQuest"
+if (Test-Path $catquest) { $optionalArgs += @("--catquest", "`"$catquest`"") }
 
-$env:TTS_HOME = Join-Path $TtsHome "tts"
+$env:HF_HOME = Join-Path $TtsHome "hf"
 $process = Start-Process -FilePath $Python `
     -ArgumentList (@(
         "-I", "`"$build\tools\voice_quests.py`""
     ) + $questLists + @(
-        "`"$GameDir\Interface\AddOns\AI_VoiceOverData_Wrath\generated\sounds\quests`"",
         "`"$GameDir\Interface\AddOns\AI_VoiceOverData_Russian`"",
         "`"$TtsHome\progress`""
-    ) + $gossipArgs) `
+    ) + $optionalArgs) `
     -WorkingDirectory $build `
     -RedirectStandardOutput (Join-Path $work "voice.log") `
     -RedirectStandardError (Join-Path $work "voice.err.log") `
