@@ -31,6 +31,7 @@ FALLBACK_VOICES = {0: "humanmalestandardnpc", 1: "humanfemalestandardnpc"}
 F5_REPO = "Misha24-10/F5-TTS_RUSSIAN"
 F5_CHECKPOINT = "F5TTS_v1_Base_v2/model_last_inference.safetensors"
 F5_VOCAB = "F5TTS_v1_Base/vocab.txt"
+WHISPER_PHANTOMS = re.compile(r"(?i)играет музыка|редактор субтитров|корректор|продолжение следует|подписывайтесь|спасибо за просмотр|субтитр")
 
 
 def provide_ffmpeg(cache_dir):
@@ -109,7 +110,7 @@ class Speaker:
                 if total + len(segment) > SAMPLE_RATE * REFERENCE_SECONDS:
                     continue
                 said = self.transcribe(segment)
-                if not words(said) or re.search(r"(\w)\1{3,}", said):
+                if not words(said) or re.search(r"(\w)\1{3,}", said) or WHISPER_PHANTOMS.search(said):
                     continue
                 chosen += [segment, gap]
                 said_all.append(said)
