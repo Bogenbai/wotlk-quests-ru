@@ -39,7 +39,9 @@ $catquest = Join-Path $GameDir "Interface\AddOns\AI_VoiceOverData_CatQuest"
 if (Test-Path $catquest) { $optionalArgs += @("--catquest", "`"$catquest`"") }
 
 $env:HF_HOME = Join-Path $TtsHome "hf"
+$log = Join-Path $work "voice.log"
 for ($attempt = 0; $attempt -le $MaxRestarts; $attempt++) {
+    if (Test-Path $log) { Get-Content $log -Encoding UTF8 | Add-Content (Join-Path $work "voice_history.log") -Encoding UTF8 }
     $process = Start-Process -FilePath $Python `
         -ArgumentList (@(
             "-I", "`"$build\tools\voice_quests.py`""
@@ -48,7 +50,7 @@ for ($attempt = 0; $attempt -le $MaxRestarts; $attempt++) {
             "`"$TtsHome\progress`""
         ) + $optionalArgs) `
         -WorkingDirectory $build `
-        -RedirectStandardOutput (Join-Path $work "voice.log") `
+        -RedirectStandardOutput $log `
         -RedirectStandardError (Join-Path $work "voice.err.log") `
         -WindowStyle Hidden -PassThru
     $null = $process.Handle
