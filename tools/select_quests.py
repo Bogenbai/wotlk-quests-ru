@@ -14,6 +14,7 @@ FACTIONS = {
     "horde": {"races": 2 | 16 | 32 | 128 | 512, "own": GROUP_HORDE, "enemy": GROUP_ALLIANCE},
 }
 HOLIDAY_ZONES = {-22, -41, -364, -366, -369, -370, -373, -374, -375, -376, -1002, -1003, -1005}
+TEXT_FIXES = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "quest_text_fixes.json"), encoding="utf-8"))
 
 sql_dir, out_path, wrath_lengths = sys.argv[1:4]
 faction_name = sys.argv[4] if len(sys.argv) > 4 else "alliance"
@@ -101,6 +102,7 @@ for quest_id in sorted(set(quest_ru) & set(quests)):
         "starters": [npc(e) for e in starters.get(quest_id, [])],
         "enders": [npc(e) for e in enders.get(quest_id, [])],
     }
+    entry.update(TEXT_FIXES.get(str(quest_id), {}))
     lookup_entries.append(entry)
     reason = exclusion_reason(quest_id, entry, FACTIONS[faction_name])
     if reason is None and faction_name != "alliance" and exclusion_reason(quest_id, entry, FACTIONS["alliance"]) is None:
