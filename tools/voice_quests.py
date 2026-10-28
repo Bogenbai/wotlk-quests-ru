@@ -79,7 +79,7 @@ def speech_segments(audio):
 
 
 class Speaker:
-    def __init__(self, device, cache_dir):
+    def __init__(self, device, cache_dir, attempts):
         from f5_tts.api import F5TTS
         from f5_tts.infer.utils_infer import transcribe
         from huggingface_hub import hf_hub_download
@@ -90,6 +90,7 @@ class Speaker:
         self.f5 = F5TTS(model="F5TTS_v1_Base", ckpt_file=hf_hub_download(F5_REPO, F5_CHECKPOINT),
                         vocab_file=hf_hub_download(F5_REPO, F5_VOCAB), device=device)
         self.transcribe_fn = transcribe
+        self.attempts = attempts
         self.refs_dir = os.path.join(cache_dir, "f5_refs")
         os.makedirs(self.refs_dir, exist_ok=True)
         self.references = {}
@@ -128,7 +129,7 @@ class Speaker:
         ref_wav, ref_text = reference
         stressed = self.accent.process_all(text)
         best = None
-        for seed in range(ATTEMPTS):
+        for seed in range(self.attempts):
             with contextlib.redirect_stdout(io.StringIO()):
                 wav, _, _ = self.f5.infer(ref_wav, ref_text, stressed, seed=seed, show_info=lambda *a: None, progress=None)
             wav = np.asarray(wav, dtype=np.float32)
@@ -177,6 +178,7 @@ def main():
     parser.add_argument("--catquest")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--attempts", type=int, default=ATTEMPTS)
     args = parser.parse_args()
 
     selections = [json.load(open(path, encoding="utf-8")) for path in args.quests]
@@ -216,7 +218,7 @@ def main():
     print(f"done {len(lengths)}, remaining {len(jobs)} files, {total_chars} chars", flush=True)
 
     provide_ffmpeg(args.cache_dir)
-    speaker = Speaker(args.device, args.cache_dir)
+    speaker = Speaker(args.device, args.cache_dir, args.attempts)
     print(f"device {args.device}", flush=True)
 
     started = time.time()
