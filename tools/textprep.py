@@ -85,7 +85,7 @@ def strip_stress(text):
 
 
 def paragraphs(text):
-    return [p.strip() for p in text.split("\n") if p.strip()]
+    return [p.strip() for p in text.split("\n") if re.search(r"[^\W\d_]", p)]
 
 
 def sentences(paragraph):
