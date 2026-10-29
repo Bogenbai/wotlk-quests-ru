@@ -3,6 +3,7 @@ param(
     [string]$TtsHome = (Join-Path $HOME "VoiceTTS"),
     [string]$Python = (Join-Path $TtsHome "venv_f5\Scripts\python.exe"),
     [int]$MaxRestarts = 50,
+    [int]$Attempts = 4,
     [switch]$Loop
 )
 
@@ -21,7 +22,7 @@ if (-not $Loop) {
         }
     }
     $supervisor = Start-Process -FilePath "powershell.exe" `
-        -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$PSCommandPath`"", "-Loop") `
+        -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$PSCommandPath`"", "-Loop", "-Attempts", $Attempts) `
         -WindowStyle Hidden -PassThru
     Set-Content -Path $pidFile -Value $supervisor.Id
     Write-Host "Started (PID $($supervisor.Id)). Progress: $work\voice.log"
@@ -32,7 +33,7 @@ $questLists = @("quests.json", "quests_horde.json") |
     ForEach-Object { Join-Path $work $_ } |
     Where-Object { Test-Path $_ } |
     ForEach-Object { "`"$_`"" }
-$optionalArgs = @("--ru-voices", "`"$work\ru_voices.json`"", "--redo", "`"$TtsHome\progress\redo_f5.json`"")
+$optionalArgs = @("--ru-voices", "`"$work\ru_voices.json`"", "--redo", "`"$TtsHome\progress\redo_f5.json`"", "--attempts", $Attempts)
 $gossipList = Join-Path $work "gossip.json"
 if (Test-Path $gossipList) { $optionalArgs += @("--gossip", "`"$gossipList`"") }
 $catquest = Join-Path $GameDir "Interface\AddOns\AI_VoiceOverData_CatQuest"
