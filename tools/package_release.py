@@ -14,7 +14,7 @@ parser.add_argument("--catquest")
 args = parser.parse_args()
 
 os.makedirs(args.out_dir, exist_ok=True)
-license_path = os.path.join(args.repo_dir, "LICENSES", "CPML-1.0.txt")
+license_path = os.path.join(args.repo_dir, "LICENSES", "CC-BY-NC-4.0.txt")
 horde_files = set()
 if args.horde:
     for quest in json.load(open(args.horde, encoding="utf-8"))["selected"]:
@@ -44,7 +44,7 @@ def write_zip(path, files, compression, prefix, source, extra=()):
 
 
 files = list(module_files(args.module_dir))
-license_entry = [(license_path, "LICENSE-CPML.txt")]
+license_entry = [(license_path, "LICENSE-CC-BY-NC-4.0.txt")]
 write_zip(os.path.join(args.out_dir, MODULE_NAME + ".zip"), [f for f in files if not is_horde(f)],
           zipfile.ZIP_STORED, MODULE_NAME, args.module_dir, license_entry)
 if horde_files:

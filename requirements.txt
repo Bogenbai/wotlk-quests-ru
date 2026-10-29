@@ -8,3 +8,4 @@ imageio-ffmpeg==0.6.0
 soundfile==0.14.0
 num2words==0.5.14
 numpy==2.5.4
+pympq==0.2.2
