@@ -2,7 +2,7 @@
 
 Русская нейросетевая озвучка квестов для WoW 3.3.5a с русским клиентом. Работает как пакет данных для [AI VoiceOver](https://github.com/mrthinger/wow-voiceover). Озвучено моделью [F5-TTS_RUSSIAN](https://huggingface.co/Misha24-10/F5-TTS_RUSSIAN), ударения расставлены [RUAccent](https://github.com/Den4ikAI/ruaccent). Голос каждого NPC взят из его записей в CatQuest, если они есть, иначе из русского клиента: из собственных реплик NPC или из общих фраз его модели.
 
-https://github.com/user-attachments/assets/f2a37f24-1b5a-42a0-94ed-869f003e7f39
+https://github.com/user-attachments/assets/ba2eab64-f066-47f0-8915-27e2a19c3022
 
 Создан для русскоязычных игроков. Язык — это не национальность, а культура — это не государство.
 
