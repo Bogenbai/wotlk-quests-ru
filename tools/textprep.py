@@ -127,6 +127,7 @@ def render(text, gender):
     text = re.sub(r"\[PH\]\s*", "", text).replace("(NAME)", "кто-то")
     text = re.sub(r"<([^>]*)>", r"\1", text)
     text = russify_latin(text)
+    text = re.sub(r"(?:\b[01]{8}\b[^\S\n]*){2,}", "", text)
     text = re.sub(r"\d+", lambda m: num2words(int(m.group()), lang="ru"), text)
     text = text.replace("–", ",").replace("—", ",").replace("…", "...")
     text = re.sub(r"(?<=\w)[\"«»„“”](?=\w)", " ", text)
