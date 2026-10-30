@@ -108,6 +108,7 @@ def russify_latin(text):
 
 def render(text, gender):
     forms = PLAYER_FORMS[gender]
+    text = re.sub(r"(?<=[А-Яа-яЁё])(?=\|3-\d+\(\$[cCrR]\))", " ", text)
     text = re.sub(r"\|3-(\d+)\(\$([cCrR])\)", lambda m: decline(gender, m.group(2), int(m.group(1))), text)
     text = re.sub(r"\|3-\d+\(([^)]*)\)", r"\1", text)
     text = re.sub(r"(\d+)\s*\|4([^:;]*):([^:;]*):([^;]*);", lambda m: m.group(1) + " " + plural(int(m.group(1)), m.group(2, 3, 4)), text)
