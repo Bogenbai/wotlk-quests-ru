@@ -24,6 +24,22 @@ DECLENSIONS = {
     },
 }
 
+LATIN_PHRASES = {
+    "World of Warcraft": "Ворлд оф Варкрафт",
+    "Worldwide Invitational": "Ворлдвайд Инвитейшнл",
+    "P.S.": "Постскриптум.",
+}
+
+HOMOGLYPHS = str.maketrans("aceopxykACEHKMOPTXYB", "асеорхукАСЕНКМОРТХУВ")
+
+LETTER_NAMES = {
+    "A": "а", "B": "бэ", "C": "цэ", "D": "дэ", "E": "е", "F": "эф", "G": "гэ", "H": "аш", "I": "и",
+    "J": "жи", "K": "ка", "L": "эл", "M": "эм", "N": "эн", "O": "о", "P": "пэ", "Q": "ку", "R": "эр",
+    "S": "эс", "T": "тэ", "U": "у", "V": "вэ", "W": "дубль-вэ", "X": "икс", "Y": "игрек", "Z": "зэт",
+}
+
+ROMAN = {"I": 1, "V": 5, "X": 10}
+
 STRESS = {
     "Североземь": "Североз+емь",
     "Штормград": "Штормгр+ад",
@@ -54,21 +70,66 @@ def plural(number, forms):
     return forms[2]
 
 
+def roman_value(token):
+    values = [ROMAN[letter] for letter in token]
+    total = sum(-v if i + 1 < len(values) and v < values[i + 1] else v for i, v in enumerate(values))
+    return total if (len(token) > 1 or token in "IV") and to_roman(total) == token else None
+
+
+def to_roman(number):
+    result = ""
+    for value, letters in ((10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")):
+        while number >= value:
+            result += letters
+            number -= value
+    return result
+
+
+def russify_word(match):
+    word = match.group()
+    if not re.search(r"[A-Za-z]", word):
+        return word
+    after_hyphen = match.start() > 0 and match.string[match.start() - 1] == "-"
+    if len(word) == 1 and word in "AaCcOoKkYy" and not after_hyphen:
+        return word.translate(HOMOGLYPHS)
+    if re.search(r"[А-Яа-яЁё]", word) or re.search(r"[a-z]", word):
+        word = word.translate(HOMOGLYPHS)
+        return re.sub(r"[A-Za-z]", "", word) if re.search(r"[А-Яа-яЁё]", word) else word
+    if re.fullmatch(r"[IVX]+", word) and roman_value(word):
+        return str(roman_value(word))
+    return "-".join(LETTER_NAMES[letter] for letter in word)
+
+
+def russify_latin(text):
+    for latin, russian in LATIN_PHRASES.items():
+        text = text.replace(latin, russian)
+    return re.sub(r"[A-Za-zА-Яа-яЁё]+", russify_word, text)
+
+
 def render(text, gender):
     forms = PLAYER_FORMS[gender]
     text = re.sub(r"\|3-(\d+)\(\$([cCrR])\)", lambda m: decline(gender, m.group(2), int(m.group(1))), text)
     text = re.sub(r"\|3-\d+\(([^)]*)\)", r"\1", text)
     text = re.sub(r"(\d+)\s*\|4([^:;]*):([^:;]*):([^;]*);", lambda m: m.group(1) + " " + plural(int(m.group(1)), m.group(2, 3, 4)), text)
     text = re.sub(r"\|4([^:;]*):([^:;]*):([^;]*);", r"\3", text)
+    text = re.sub(r"(?<![A-Za-z$])[gG]\$?(?=[А-Яа-яЁё][^:;$\s]*:)", "$G", text)
     text = re.sub(r"\$[gG]\s*([^:;]*):([^:;]*)(:[^;]*)?;", lambda m: m.group(1 if gender == "m" else 2), text)
+    text = re.sub(r"\$[gG]\s*([^:;$]*);([^\s,.!?;:$]+);?", lambda m: m.group(1 if gender == "m" else 2), text)
+    text = re.sub(r"\$[gG]\s*([^:;$\s]+):([^\s,.!?;:$]+)", lambda m: m.group(1 if gender == "m" else 2), text)
     text = re.sub(r"\$([nNcCrR])", lambda m: forms[m.group(1).lower()], text)
     text = re.sub(r"\$\d+[wW]", "немало", text)
+    text = re.sub(r"\$\d+[kK]", "несколько минут", text)
     text = re.sub(r"\$[gG]\b", "", text)
-    text = re.sub(r"\$[bB]", "\n", text)
+    text = re.sub(r"(?<=[.!?])[bB](?=\$[bB])", "\n", text)
+    text = re.sub(r"\$[bB]|/[bB](?![A-Za-z])", "\n", text)
+    text = re.sub(r"(?<![A-Za-zА-Яа-яЁё])[bB](?=[А-ЯЁ])", "\n", text)
     text = re.sub(r"[$|]", "", text)
+    text = re.sub(r"\[PH\]\s*", "", text).replace("(NAME)", "кто-то")
     text = re.sub(r"<([^>]*)>", r"\1", text)
+    text = russify_latin(text)
     text = re.sub(r"\d+", lambda m: num2words(int(m.group()), lang="ru"), text)
     text = text.replace("–", ",").replace("—", ",").replace("…", "...")
+    text = re.sub(r"(?<=\w)[\"«»„“”](?=\w)", " ", text)
     text = re.sub(r"[\"«»„“”]", "", text)
     text = re.sub(r"\s*,(\s*,)+", ",", text)
     return text
